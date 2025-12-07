@@ -107,7 +107,7 @@ async def process_signed_message(root):
     print('============')
     signed_body = sign_message(inner_bytes)
     await send_signed_message(signed_body, token,recipient_domain,"AGR")
-    """
+
 
     """
     # FlexRequest verwerken
