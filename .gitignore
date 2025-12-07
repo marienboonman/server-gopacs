@@ -188,3 +188,4 @@ cython_debug/
 .cursorindexingignore
 test-local/config.py
 test/config.py
+test-2/config.py

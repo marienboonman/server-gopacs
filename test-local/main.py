@@ -143,7 +143,7 @@ async def uftp_endpoint(request: Request):
         # -------------------------------------------------------
         # 2) Public key ophalen
         # -------------------------------------------------------
-        public_key_bytes = await get_public_key(sender_role, sender_domain)
+        public_key_bytes = await get_public_key(sender_role, sender_domain,MY_PUBLIC_KEY)
 
 
         # -------------------------------------------------------
@@ -172,52 +172,3 @@ async def uftp_endpoint(request: Request):
             status_code=status.HTTP_400_BAD_REQUEST,
             content=f"Bad Request: {e}",
         )
-
-
-'''
-@app.post("/shapeshifter/api/v3/message")
-async def uftp_endpoint(request: Request):
-    """
-    Jouw UFTP endpoint.
-    - ontvangt SignedMessage
-    - verifieert afzender
-    - decodeert inner message (bijv. FlexRequest)
-    - stuurt HTTP 200 OK als technische ack
-    - stuurt (asynchroon) een FlexRequestResponse terug
-    """
-    raw_body = await request.body()
-
-    try:
-        root = etree.fromstring(raw_body)
-        if root.tag != "SignedMessage":
-            return Response(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content="Expected SignedMessage root element",
-            )
-
-        sender_domain = root.attrib["SenderDomain"]
-        sender_role = root.attrib["SenderRole"]  # DSO of AGR
-        body_b64 = root.attrib["Body"]
-
-        # 1) public key ophalen en inner XML verifiëren
-        public_key_bytes = await get_public_key(sender_role, sender_domain)
-        inner_xml = verify_and_extract_inner_xml(body_b64, public_key_bytes)
-
-        # 2) inner XML parsen om te zien wat voor bericht het is
-        inner_root = etree.fromstring(inner_xml)
-        msg_type = inner_root.tag  # FlexRequest, FlexOrder, TestMessage, ...
-
-        # Voorbeeld: bij FlexRequest meteen een FlexRequestResponse "Accepted" maken
-        if msg_type == "FlexRequest":
-            await handle_flex_request(inner_root)
-
-        # Altijd HTTP 200 OK als het bericht technisch goed was
-        return Response(status_code=status.HTTP_200_OK)
-
-    except Exception as e:
-        # Bij parsing/validatie fouten een 400 teruggeven (zoals GOPACS ook doet) :contentReference[oaicite:1]{index=1}
-        return Response(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=f"Bad Request: {e}",
-        )
-'''
