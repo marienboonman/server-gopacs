@@ -16,6 +16,39 @@ from config import (
 )
 
 
+app = FastAPI()
+
+@app.post("/shapeshifter/api/v3/message")
+async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
+    raw_body = await request.body()
+    print("STATUS: Raw body received")
+
+    try:
+        root = etree.fromstring(raw_body)
+        localname = etree.QName(root.tag).localname
+
+        if localname != "SignedMessage":
+            return Response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content="Expected SignedMessage root element",
+            )
+
+        # Background task process_signed_message
+        background_tasks.add_task(process_signed_message, root)
+
+        # Onmiddellijke confirmatie aan GOPACS:
+        return Response(
+            status_code=200,
+            content="SignedMessage received"
+        )
+
+    except Exception as e:
+        return Response(
+            status_code=400,
+            content=f"Bad Request: {e}"
+        )
+
+
 
 async def get_oauth_token(CLIENT_ID: str, CLIENT_SECRET: str) -> str:
     """Vraag een Bearer token op via client credentials flow (zoals GOPACS voorschrijft)"""
@@ -161,3 +194,4 @@ async def process_signed_message(root):
     # FlexRequest verwerken
     if msg_type == "FlexRequest":
         await handle_flex_request(inner_root)
+
