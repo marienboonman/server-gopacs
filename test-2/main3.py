@@ -256,9 +256,17 @@ def construct_flex_offer(incoming_message: str) -> str:
     )
     flex_resp.set("ISP-Duration", incoming_message_root.attrib["ISP-Duration"])
 
-    subelement = etree.SubElement(flex_resp, "OfferOption")
-    subelement.set('OptionReference',str(uuid.uuid4()))
-    subelement.set('Price','0.00')
+    OfferOption = etree.SubElement(flex_resp, "OfferOption")
+    OfferOption.set('OptionReference',str(uuid.uuid4()))
+    OfferOption.set('Price','0.00')
+
+    for elem in incoming_message_root:
+        if elem.tag == 'ISP':
+            isp = etree.SubElement(OfferOption, "ISP")
+            isp.set('Start',elem.attrib["Start"])
+            isp.set('Duration',elem.attrib["Duration"])
+            isp.set('Power',elem.attrib["MaxPower"])
+
 
     response_inner_bytes = etree.tostring(
         flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
