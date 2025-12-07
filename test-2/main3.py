@@ -94,7 +94,7 @@ async def handle_flex_request(root):
 
 
     response_inner_bytes = construct_flex_response(incoming_message)
-    responseTimeStamp = etree.XML(response_inner_bytes).attrib["RecipientDomain"]
+    responseTimeStamp = etree.XML(response_inner_bytes).attrib["TimeStamp"]
     filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)

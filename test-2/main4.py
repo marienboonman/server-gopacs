@@ -48,10 +48,11 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 
         localname = etree.QName(etree.XML(incoming_message).tag).localname
         print(localname)
-        print(incoming_message)
-        print('INCOMING MESSAGE SAVED:')
+    
+        print('INCOMING MESSAGE RECEIVED:')
         print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
         print('============')
+
         if localname == "FlexRequest":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
@@ -96,7 +97,8 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
-    my_domain = incoming_message.attrib["RecipientDomain"]
+    print(type(incoming_message))
+    my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = incoming_message.attrib["TimeStamp"]
@@ -113,7 +115,7 @@ async def handle_flex_request(incoming_message):
 
 
     response_inner_bytes = construct_flex_response(incoming_message)
-    responseTimeStamp = etree.XML(response_inner_bytes).attrib["RecipientDomain"]
+    responseTimeStamp = etree.XML(response_inner_bytes).attrib["TimeStamp"]
     filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)
