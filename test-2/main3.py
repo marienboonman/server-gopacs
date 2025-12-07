@@ -54,8 +54,14 @@ FUNC FOR MAIN BACKGROUND TASK
 """
 
 async def process_signed_message(root):
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    version = root.attrib["Version"]
     sender_domain = root.attrib["SenderDomain"]
-    sender_role = root.attrib["SenderRole"]
+    recipient_domain = root.attrib["RecipientDomain"]
+    conversation_id = root.attrib["ConversationID"]
+    flex_req_msg_id = root.attrib["MessageID"]
+
     body_b64 = root.attrib["Body"]
 
     # Public key ophalen
@@ -65,7 +71,7 @@ async def process_signed_message(root):
     inner_xml_bytes = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
     #SAVE INCOMING MESSAGE
-    filename = 'messaging/Request {}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
+    filename = 'messaging/Request_{}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
     with open(filename,'wb') as f:
         f.write(inner_xml_bytes)
         f.close()
@@ -74,10 +80,38 @@ async def process_signed_message(root):
     inner_root = etree.XML(inner_xml_bytes)
     msg_type = etree.QName(inner_root.tag).localname
 
+    
+    # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
+    flex_resp = etree.Element(
+        "FlexRequestResponse",
+        Version=version,
+        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
+        RecipientDomain=sender_domain,   # en de DSO de ontvanger
+        TimeStamp=now,                   # TODO: nu-tijd in UTC
+        MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
+        ConversationID=conversation_id,
+        Result="Accepted",
+        FlexRequestMessageID=flex_req_msg_id,
+    )
+
+    inner_bytes = etree.tostring(
+        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
+
+    token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
+    print('STATUS: Received token')
+    print('RESPONSE INNER BYTES')
+    print(inner_bytes.decode("utf-8"))
+    print('============')
+    signed_body = sign_message(inner_bytes)
+    await send_signed_message(signed_body, token,recipient_domain,"AGR")
+
+
+    """
     # FlexRequest verwerken
     if msg_type == "FlexRequest":
         await handle_flex_request(inner_root)
-
+    """
 """
 MAIN FUNCTION HANDLING FLEX REQUEST
 """
@@ -136,9 +170,11 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
     #print("DEBUG INNER XML BYTES (returned by verify):", inner_xml)
+    """
     with open("Received {}.xml".format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')), "wb") as f:
         f.write(inner_xml)
         f.close()
+    """
     return inner_xml
 
 
