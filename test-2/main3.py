@@ -137,7 +137,7 @@ def construct_flex_response(incoming_message: str, timestamp: str) -> str:
         Version=version,
         SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
         RecipientDomain=sender_domain,   # en de DSO de ontvanger
-        TimeStamp=now,                   # TODO: nu-tijd in UTC
+        TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
         Result="Accepted",
