@@ -58,7 +58,7 @@ FUNC FOR MAIN BACKGROUND TASK
 """
 
 async def handle_flex_request(root):
-    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
@@ -80,7 +80,7 @@ async def handle_flex_request(root):
     print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
     print('============')
 
-    response_inner_bytes = construct_flex_response(incoming_message)
+    response_inner_bytes = construct_flex_response(incoming_message, timestamp)
     
     filename = 'messaging/{}_Response.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%d%H%M%SZ'))
     with open(filename,'wb') as f:
@@ -121,7 +121,7 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
 """
 FUNCS FOR OUTGOING MESSAGE
 """
-def construct_flex_response(incoming_message: str) -> str:
+def construct_flex_response(incoming_message: str, timestamp: str) -> str:
         # Parse inner XML en extract waarden om te gebruiken in response
     incoming_message_root = etree.XML(incoming_message)
     msg_type = etree.QName(incoming_message_root.tag).localname
