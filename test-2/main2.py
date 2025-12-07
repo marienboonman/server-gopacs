@@ -59,6 +59,9 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
     #print("DEBUG INNER XML BYTES (returned by verify):", inner_xml)
+    with open("Received {}.xml".format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')), "wb") as f:
+        f.write(inner_xml)
+        f.close()
     return inner_xml
 
 
