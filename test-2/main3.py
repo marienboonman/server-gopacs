@@ -30,21 +30,21 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         root = etree.fromstring(raw_body)
         localname = etree.QName(root.tag).localname
 
-        if localname != "SignedMessage":
+        if localname == "SignedMessage":
+#            return Response(
+#                status_code=status.HTTP_400_BAD_REQUEST,
+#                content="Expected SignedMessage root element",
+#            )
+
+            # Background task process_signed_message
+            background_tasks.add_task(handle_flex_request, root)
+
+            # Onmiddellijke confirmatie aan GOPACS:
+            
             return Response(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content="Expected SignedMessage root element",
+                status_code=200,
+                content="SignedMessage received"
             )
-
-        # Background task process_signed_message
-        background_tasks.add_task(handle_flex_request, root)
-
-        # Onmiddellijke confirmatie aan GOPACS:
-        
-        return Response(
-            status_code=200,
-            content="SignedMessage received"
-        )
 
     except Exception as e:
         return Response(
@@ -67,6 +67,8 @@ async def handle_flex_request(root):
     body_b64 = root.attrib["Body"]
 
     print('OBJECTTYPE: ', type(root))
+    #print(root)
+    #print('===============')
     #print(xml.dom.minidom.parseString(base64.b64decode(body_b64)).toprettyxml())
     #print(root.toprettyxml()) #NEEDS FIXING
 
