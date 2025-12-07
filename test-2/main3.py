@@ -65,7 +65,7 @@ async def process_signed_message(root):
     inner_xml_bytes = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
     #SAVE INCOMING MESSAGE
-    filename = 'Request {}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
+    filename = 'messaging/Request {}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
     with open(filename,'wb') as f:
         f.write(inner_xml_bytes)
         f.close()
