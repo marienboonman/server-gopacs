@@ -46,7 +46,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         # Verify en inner XML extraheren
         incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
-        localname = etree.QName(etree.XML(incoming_message)tag).localname
+        localname = etree.QName(etree.XML(incoming_message).tag).localname
 
         if localname == "FlexRequest":
 #            return Response(
