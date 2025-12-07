@@ -60,7 +60,7 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
-    print(root.toprettyxml())
+    #print(root.toprettyxml()) #NEEDS FIXING
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
