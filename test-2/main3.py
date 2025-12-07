@@ -61,7 +61,7 @@ async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     print('OBJECTTYPE: ', type(root))
-
+    print(xml.dom.minidom.parseString(body.b64.b64decode(body_b64)).toprettyxml())
     #print(root.toprettyxml()) #NEEDS FIXING
     
     sender_domain = root.attrib["SenderDomain"]
