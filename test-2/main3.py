@@ -123,7 +123,8 @@ async def handle_flex_request(root):
     print('FLEXOFFER:')
     print(xml.dom.minidom.parseString(flex_offer).toprettyxml())
     print('============')
-
+    signed_flex_offer = sign_message(flex_offer)
+    await send_signed_message(signed_flex_offer, token, my_domain,"AGR")
     #await send_flexoffer()
 
 """
