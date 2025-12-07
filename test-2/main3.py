@@ -147,7 +147,7 @@ def construct_flex_response(incoming_message: str, timestamp: str) -> str:
     response_inner_bytes = etree.tostring(
         flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
-
+    return response_inner_bytes
 
 def sign_message(inner_xml: bytes) -> str:
     """
