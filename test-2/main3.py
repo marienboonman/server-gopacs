@@ -60,6 +60,7 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
+    print(xml.dom.minidom.parseString(root).toprettyxml())
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
@@ -70,6 +71,7 @@ async def handle_flex_request(root):
 
     # Verify en inner XML extraheren
     incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
+    #haal my_domain uit incoming message 
     my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
@@ -102,6 +104,7 @@ async def handle_flex_request(root):
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
+    print(xml.dom.minidom.parseString(response_inner_bytes).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
 
 
