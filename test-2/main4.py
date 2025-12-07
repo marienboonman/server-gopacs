@@ -99,8 +99,8 @@ async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
     print(type(incoming_message))
-    my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
-
+    my_domain = incoming_message.attrib["RecipientDomain"]
+    print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = incoming_message.attrib["TimeStamp"]
     filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
