@@ -15,6 +15,7 @@ from config import (
     OAUTH_TOKEN_URL, CLIENT_ID, CLIENT_SECRET
 )
 
+import time
 
 app = FastAPI()
 
@@ -37,6 +38,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         background_tasks.add_task(handle_flex_request, root)
 
         # Onmiddellijke confirmatie aan GOPACS:
+        time.sleep(5) #sleep command om te proberen gopacs te foppen en te kijken of hij dan mijn respons net verwcaht
         return Response(
             status_code=200,
             content="SignedMessage received"
@@ -64,24 +66,28 @@ async def handle_flex_request(root):
     public_key_bytes = await get_public_key(sender_role, sender_domain)
 
     # Verify en inner XML extraheren
-    inner_xml_bytes = verify_and_extract_inner_xml(body_b64, public_key_bytes)
+    incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
-    #SAVE INCOMING MESSAGE
+    #SAVE INCOMING MESSAGE AND PRINT
     filename = 'messaging/Request_{}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
     with open(filename,'wb') as f:
-        f.write(inner_xml_bytes)
+        f.write(incoming_message)
         f.close()
-
-    # Parse inner XML en extract
-    inner_root = etree.XML(inner_xml_bytes)
-    msg_type = etree.QName(inner_root.tag).localname
-    version = inner_root.attrib["Version"]
-    #sender_domain = inner_root.attrib["SenderDomain"]
-    recipient_domain = inner_root.attrib["RecipientDomain"]
-    conversation_id = inner_root.attrib["ConversationID"]
-    flex_req_msg_id = inner_root.attrib["MessageID"]
     
-    # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
+    print('INCOMING MESSAGE SAVED:')
+    print(incoming_message)
+    print('============')
+
+    # Parse inner XML en extract waarden om te gebruiken in response
+    incoming_message_root = etree.XML(incoming_message)
+    msg_type = etree.QName(incoming_message_root.tag).localname
+    version = incoming_message_root.attrib["Version"]
+    #sender_domain = inner_root.attrib["SenderDomain"]
+    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
+    conversation_id = incoming_messageroot.attrib["ConversationID"]
+    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    
+    # Bouw response op
     flex_resp = etree.Element(
         "FlexRequestResponse",
         Version=version,
@@ -94,7 +100,7 @@ async def handle_flex_request(root):
         FlexRequestMessageID=flex_req_msg_id,
     )
 
-    inner_bytes = etree.tostring(
+    response_inner_bytes = etree.tostring(
         flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
 
@@ -103,7 +109,7 @@ async def handle_flex_request(root):
     print('RESPONSE INNER BYTES')
     print(inner_bytes.decode("utf-8"))
     print('============')
-    signed_body = sign_message(inner_bytes)
+    signed_body = sign_message(response_inner_bytes)
     await send_signed_message(signed_body, token,recipient_domain,"AGR")
 
 
