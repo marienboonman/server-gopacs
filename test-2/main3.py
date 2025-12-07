@@ -109,53 +109,6 @@ async def process_signed_message(root):
     await send_signed_message(signed_body, token,recipient_domain,"AGR")
 
 
-    """
-    # FlexRequest verwerken
-    if msg_type == "FlexRequest":
-        await handle_flex_request(inner_root)
-    """
-"""
-MAIN FUNCTION HANDLING FLEX REQUEST
-"""
-
-async def handle_flex_request(flex_request_root: etree._Element):
-    """
-    Bouw en verstuur een FlexRequestResponse (functionele ack) terug naar de DSO.
-    """
-    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    version = flex_request_root.attrib["Version"]
-    sender_domain = flex_request_root.attrib["SenderDomain"]
-    recipient_domain = flex_request_root.attrib["RecipientDomain"]
-    conversation_id = flex_request_root.attrib["ConversationID"]
-    flex_req_msg_id = flex_request_root.attrib["MessageID"]
-
-    # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
-    flex_resp = etree.Element(
-        "FlexRequestResponse",
-        Version=version,
-        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
-        RecipientDomain=sender_domain,   # en de DSO de ontvanger
-        TimeStamp=now, # TODO: nu-tijd in UTC
-        MessageID= str(uuid.uuid4()), # TODO: echte UUID genereren
-        ConversationID=conversation_id,
-        Result="Accepted",
-        FlexRequestMessageID=flex_req_msg_id,
-    )
-
-    inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
-
-    token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
-    print('STATUS: Received token')
-    print('RESPONSE INNER BYTES')
-    print(inner_bytes.decode("utf-8"))
-    print('============')
-    signed_body = sign_message(inner_bytes)
-    await send_signed_message(signed_body, token,recipient_domain,"AGR")
-
-
-
 """
 FUNCS FOR INCOMING MESSAGE
 """
