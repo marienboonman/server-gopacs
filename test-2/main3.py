@@ -105,6 +105,10 @@ async def handle_flex_request(root):
     response_inner_bytes = etree.tostring(
         flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
+    print('OUTGOING MESSAGE SAVED:')
+    print(xml.dom.minidom.parseString(response_inner_bytes).toprettyxml())
+    print('============')
+
 
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
