@@ -60,6 +60,7 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
+    my_domain = root.attrib["RecipientDomain"]
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
     body_b64 = root.attrib["Body"]
@@ -100,8 +101,7 @@ async def handle_flex_request(root):
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
-    reci
-    await send_signed_message(signed_response_body, token,sender_domain,"AGR")
+    await send_signed_message(signed_response_body, token,my_domain,"AGR")
 
 
 """
