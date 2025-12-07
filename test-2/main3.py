@@ -71,7 +71,7 @@ async def handle_flex_request(root):
     incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
     #SAVE INCOMING MESSAGE AND PRINT
-    filename = 'messaging/Request_{}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
+    filename = 'messaging/{}_Request.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
     with open(filename,'wb') as f:
         f.write(incoming_message)
         f.close()
@@ -80,31 +80,13 @@ async def handle_flex_request(root):
     print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
     print('============')
 
-    # Parse inner XML en extract waarden om te gebruiken in response
-    incoming_message_root = etree.XML(incoming_message)
-    msg_type = etree.QName(incoming_message_root.tag).localname
-    version = incoming_message_root.attrib["Version"]
-    #sender_domain = inner_root.attrib["SenderDomain"]
-    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
-    conversation_id = incoming_message_root.attrib["ConversationID"]
-    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    response_inner_bytes = construct_flex_response(incoming_message)
     
-    # Bouw response op
-    flex_resp = etree.Element(
-        "FlexRequestResponse",
-        Version=version,
-        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
-        RecipientDomain=sender_domain,   # en de DSO de ontvanger
-        TimeStamp=now,                   # TODO: nu-tijd in UTC
-        MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
-        ConversationID=conversation_id,
-        Result="Accepted",
-        FlexRequestMessageID=flex_req_msg_id,
-    )
-
-    response_inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
+    filename = 'messaging/{}_Response.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%d%H%M%SZ'))
+    with open(filename,'wb') as f:
+        f.write(incoming_message)
+        f.close()
+    
     print('OUTGOING MESSAGE SAVED:')
     print(xml.dom.minidom.parseString(response_inner_bytes).toprettyxml())
     print('============')
@@ -139,6 +121,34 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
 """
 FUNCS FOR OUTGOING MESSAGE
 """
+def construct_flex_response(incoming_message: str) -> str:
+        # Parse inner XML en extract waarden om te gebruiken in response
+    incoming_message_root = etree.XML(incoming_message)
+    msg_type = etree.QName(incoming_message_root.tag).localname
+    version = incoming_message_root.attrib["Version"]
+    #sender_domain = inner_root.attrib["SenderDomain"]
+    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
+    conversation_id = incoming_message_root.attrib["ConversationID"]
+    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    
+    # Bouw response op
+    flex_resp = etree.Element(
+        "FlexRequestResponse",
+        Version=version,
+        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
+        RecipientDomain=sender_domain,   # en de DSO de ontvanger
+        TimeStamp=now,                   # TODO: nu-tijd in UTC
+        MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
+        ConversationID=conversation_id,
+        Result="Accepted",
+        FlexRequestMessageID=flex_req_msg_id,
+    )
+
+    response_inner_bytes = etree.tostring(
+        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
+
+
 def sign_message(inner_xml: bytes) -> str:
     """
     Sign inner XML met jouw private key en retourneer base64-encoded SignedMessage Bod>
