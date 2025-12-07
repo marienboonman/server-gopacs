@@ -84,7 +84,7 @@ async def handle_flex_request(root):
     version = incoming_message_root.attrib["Version"]
     #sender_domain = inner_root.attrib["SenderDomain"]
     recipient_domain = incoming_message_root.attrib["RecipientDomain"]
-    conversation_id = incoming_messageroot.attrib["ConversationID"]
+    conversation_id = incoming_message_root.attrib["ConversationID"]
     flex_req_msg_id = incoming_message_root.attrib["MessageID"]
     
     # Bouw response op
