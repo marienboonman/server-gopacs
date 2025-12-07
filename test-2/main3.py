@@ -249,7 +249,7 @@ def construct_flex_offer(incoming_message: str) -> str:
         TimeZone = incoming_message_root.attrib["TimeZone"],
         Period = incoming_message_root.attrib["Period"],
         CongestionPoint = incoming_message_root.attrib["CongestionPoint"],
-        ExpirationDataTime= expiration,
+        ExpirationDateTime= expiration,
         FlexRequestMessageID=flex_req_msg_id,
         ContractID = incoming_message_root.attrib["ContractID"],
         BaselineReference = "",
