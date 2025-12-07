@@ -193,7 +193,6 @@ MESSAGE BUILDING
 """
 def construct_flex_response(incoming_message: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    expiration = (datetime.now(timezone.utc)+timedelta(hours = 1)).strftime('%Y-%m-%dT%H:%M:%SZ')
         # Parse inner XML en extract waarden om te gebruiken in response
     incoming_message_root = etree.XML(incoming_message)
     msg_type = etree.QName(incoming_message_root.tag).localname
@@ -223,6 +222,8 @@ def construct_flex_response(incoming_message: str) -> str:
 
 def construct_flex_offer(incoming_message: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    expiration = (datetime.now(timezone.utc)+timedelta(hours = 1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
         # Parse inner XML en extract waarden om te gebruiken in response
     incoming_message_root = etree.XML(incoming_message)
     msg_type = etree.QName(incoming_message_root.tag).localname
@@ -245,10 +246,10 @@ def construct_flex_offer(incoming_message: str) -> str:
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
         #ISP-Duration=incoming_message_root.attrib["ISP-Duration"],
-        TimeZone = incoming_message_root.attrib[""],
-        Period = incoming_message_root.attrib[""],
-        CongestionPoint = incoming_message_root.attrib[""],
-        ExpirationDataTime= incoming_message_root.attrib[""],
+        TimeZone = incoming_message_root.attrib["TimeZone"],
+        Period = incoming_message_root.attrib["Period"],
+        CongestionPoint = incoming_message_root.attrib["CongestionPoint"],
+        ExpirationDataTime= expiration,
         FlexRequestMessageID=flex_req_msg_id,
         ContractID = incoming_message_root.attrib["ContractID"],
         BaselineReference = "",
