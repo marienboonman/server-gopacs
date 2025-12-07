@@ -244,7 +244,7 @@ def construct_flex_offer(incoming_message: str, timestamp: str) -> str:
         TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
-        ISP-Duration=incoming_message_root.attrib["ISP-Duration"],
+        #ISP-Duration=incoming_message_root.attrib["ISP-Duration"],
         TimeZone = incoming_message_root.attrib[""],
         Period = incoming_message_root.attrib[""],
         CongestionPoint = = incoming_message_root.attrib[""],
