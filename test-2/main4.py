@@ -99,6 +99,7 @@ async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
     print(type(incoming_message))
+    print([elem.tag for elem in incoming_message.iter()])
     my_domain = incoming_message.attrib["RecipientDomain"]
     print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
