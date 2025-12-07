@@ -49,6 +49,9 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         localname = etree.QName(incoming_message.tag).localname
         print(localname)
         print(incoming_message)
+        print('INCOMING MESSAGE SAVED:')
+        print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
+        print('============')
         if localname == "FlexRequest":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
