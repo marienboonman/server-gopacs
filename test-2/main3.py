@@ -34,7 +34,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
             )
 
         # Background task process_signed_message
-        background_tasks.add_task(process_signed_message, root)
+        background_tasks.add_task(handle_flex_request, root)
 
         # Onmiddellijke confirmatie aan GOPACS:
         return Response(
@@ -53,15 +53,13 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 FUNC FOR MAIN BACKGROUND TASK
 """
 
-async def process_signed_message(root):
+async def handle_flex_request(root):
     now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
     body_b64 = root.attrib["Body"]
 
-    # Public key ophalen
-    public_key_bytes = await get_public_key(sender_role, sender_domain)
     # Public key ophalen
     public_key_bytes = await get_public_key(sender_role, sender_domain)
 
@@ -74,7 +72,7 @@ async def process_signed_message(root):
         f.write(inner_xml_bytes)
         f.close()
 
-    # Parse inner XML
+    # Parse inner XML en extract
     inner_root = etree.XML(inner_xml_bytes)
     msg_type = etree.QName(inner_root.tag).localname
     version = inner_root.attrib["Version"]
@@ -119,17 +117,8 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     retourneer de inner XML bytes (bijv. <FlexRequest>…</FlexRequest>).
     """
     signed_bytes = base64.b64decode(body_b64)
-    #print("DEBUG verify() signed_bytes len:", len(signed_bytes))
-    #print("DEBUG PUBLIC KEY USED:", base64.b64encode(public_key_bytes).decode())
-    #print("DEBUG BODY B64 RECEIVED:", body_b64)
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
-    #print("DEBUG INNER XML BYTES (returned by verify):", inner_xml)
-    """
-    with open("Received {}.xml".format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')), "wb") as f:
-        f.write(inner_xml)
-        f.close()
-    """
     return inner_xml
 
 
