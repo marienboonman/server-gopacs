@@ -56,14 +56,12 @@ FUNC FOR MAIN BACKGROUND TASK
 async def process_signed_message(root):
     now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
-    version = root.attrib["Version"]
     sender_domain = root.attrib["SenderDomain"]
-    recipient_domain = root.attrib["RecipientDomain"]
-    conversation_id = root.attrib["ConversationID"]
-    flex_req_msg_id = root.attrib["MessageID"]
-
+    sender_role = root.attrib["SenderRole"]
     body_b64 = root.attrib["Body"]
 
+    # Public key ophalen
+    public_key_bytes = await get_public_key(sender_role, sender_domain)
     # Public key ophalen
     public_key_bytes = await get_public_key(sender_role, sender_domain)
 
@@ -79,7 +77,11 @@ async def process_signed_message(root):
     # Parse inner XML
     inner_root = etree.XML(inner_xml_bytes)
     msg_type = etree.QName(inner_root.tag).localname
-
+    version = inner_root.attrib["Version"]
+    #sender_domain = inner_root.attrib["SenderDomain"]
+    recipient_domain = inner_root.attrib["RecipientDomain"]
+    conversation_id = inner_root.attrib["ConversationID"]
+    flex_req_msg_id = inner_root.attrib["MessageID"]
     
     # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
     flex_resp = etree.Element(
@@ -105,7 +107,7 @@ async def process_signed_message(root):
     print('============')
     signed_body = sign_message(inner_bytes)
     await send_signed_message(signed_body, token,recipient_domain,"AGR")
-
+    """
 
     """
     # FlexRequest verwerken
