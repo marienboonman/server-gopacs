@@ -100,7 +100,8 @@ async def handle_flex_request(root):
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
-    await send_signed_message(signed_response_body, token,recipient_domain,"AGR")
+    reci
+    await send_signed_message(signed_response_body, token,sender_domain,"AGR")
 
 
 """
