@@ -49,35 +49,80 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         )
 
 
+"""
+FUNC FOR MAIN BACKGROUND TASK
+"""
 
-async def get_oauth_token(CLIENT_ID: str, CLIENT_SECRET: str) -> str:
-    """Vraag een Bearer token op via client credentials flow (zoals GOPACS voorschrijft)"""
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-    }
-    async with httpx.AsyncClient() as client:
-        r = await client.post(OAUTH_TOKEN_URL, data=data)
-        r.raise_for_status()
-        #print('BEARER TOKEN')
-        #print(r.json()['access_token'])
-        #print('==============')
-        return r.json()["access_token"]
+async def process_signed_message(root):
+    sender_domain = root.attrib["SenderDomain"]
+    sender_role = root.attrib["SenderRole"]
+    body_b64 = root.attrib["Body"]
 
-async def get_public_key(sender_role: str, sender_domain: str) -> bytes:
+    # Public key ophalen
+    public_key_bytes = await get_public_key(sender_role, sender_domain)
+
+    # Verify en inner XML extraheren
+    inner_xml_bytes = verify_and_extract_inner_xml(body_b64, public_key_bytes)
+
+    #SAVE INCOMING MESSAGE
+    filename = 'Request {}.xml'.format(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
+    with open(filename,'wb') as f:
+        f.write(inner_xml_bytes)
+        f.close()
+
+    # Parse inner XML
+    inner_root = etree.XML(inner_xml_bytes)
+    msg_type = etree.QName(inner_root.tag).localname
+
+    # FlexRequest verwerken
+    if msg_type == "FlexRequest":
+        await handle_flex_request(inner_root)
+
+"""
+MAIN FUNCTION HANDLING FLEX REQUEST
+"""
+
+async def handle_flex_request(flex_request_root: etree._Element):
     """
-    Gebruik Haal publicKey van de afzender op via Participant API.
-    /v2/participants/{role}/{domain}  → publicKey (base64)
+    Bouw en verstuur een FlexRequestResponse (functionele ack) terug naar de DSO.
     """
-    url = f"{GOPACS_PARTICIPANT_API}/{sender_role}/{sender_domain}"
-    async with httpx.AsyncClient() as client:
-        r = await client.get(url)
-        r.raise_for_status()
-        data = r.json()
-        public_key_b64 = data["publicKey"]
-        return base64.b64decode(public_key_b64)
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    version = flex_request_root.attrib["Version"]
+    sender_domain = flex_request_root.attrib["SenderDomain"]
+    recipient_domain = flex_request_root.attrib["RecipientDomain"]
+    conversation_id = flex_request_root.attrib["ConversationID"]
+    flex_req_msg_id = flex_request_root.attrib["MessageID"]
 
+    # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
+    flex_resp = etree.Element(
+        "FlexRequestResponse",
+        Version=version,
+        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
+        RecipientDomain=sender_domain,   # en de DSO de ontvanger
+        TimeStamp=now, # TODO: nu-tijd in UTC
+        MessageID= str(uuid.uuid4()), # TODO: echte UUID genereren
+        ConversationID=conversation_id,
+        Result="Accepted",
+        FlexRequestMessageID=flex_req_msg_id,
+    )
+
+    inner_bytes = etree.tostring(
+        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
+
+    token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
+    print('STATUS: Received token')
+    print('RESPONSE INNER BYTES')
+    print(inner_bytes.decode("utf-8"))
+    print('============')
+    signed_body = sign_message(inner_bytes)
+    await send_signed_message(signed_body, token,recipient_domain,"AGR")
+
+
+
+"""
+FUNCS FOR INCOMING MESSAGE
+"""
 
 def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> bytes:
     """
@@ -97,6 +142,9 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     return inner_xml
 
 
+"""
+FUNCS FOR OUTGOING MESSAGE
+"""
 def sign_message(inner_xml: bytes) -> str:
     """
     Sign inner XML met jouw private key en retourneer base64-encoded SignedMessage Bod>
@@ -138,60 +186,34 @@ async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_RO
     print(r)
     print(r.text)
 
-async def handle_flex_request(flex_request_root: etree._Element):
+"""
+FUNCS FOR AUTHORISATION
+"""
+
+async def get_oauth_token(CLIENT_ID: str, CLIENT_SECRET: str) -> str:
+    """Vraag een Bearer token op via client credentials flow (zoals GOPACS voorschrijft)"""
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+    }
+    async with httpx.AsyncClient() as client:
+        r = await client.post(OAUTH_TOKEN_URL, data=data)
+        r.raise_for_status()
+        #print('BEARER TOKEN')
+        #print(r.json()['access_token'])
+        #print('==============')
+        return r.json()["access_token"]
+
+async def get_public_key(sender_role: str, sender_domain: str) -> bytes:
     """
-    Bouw en verstuur een FlexRequestResponse (functionele ack) terug naar de DSO.
+    Gebruik Haal publicKey van de afzender op via Participant API.
+    /v2/participants/{role}/{domain}  → publicKey (base64)
     """
-    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    version = flex_request_root.attrib["Version"]
-    sender_domain = flex_request_root.attrib["SenderDomain"]
-    recipient_domain = flex_request_root.attrib["RecipientDomain"]
-    conversation_id = flex_request_root.attrib["ConversationID"]
-    flex_req_msg_id = flex_request_root.attrib["MessageID"]
-
-    # Simpel: altijd "Accepted" – hier kun je later je eigen business rules toevoegen.
-    flex_resp = etree.Element(
-        "FlexRequestResponse",
-        Version=version,
-        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
-        RecipientDomain=sender_domain,   # en de DSO de ontvanger
-        TimeStamp=now, # TODO: nu-tijd in UTC
-        MessageID= str(uuid.uuid4()), # TODO: echte UUID genereren
-        ConversationID=conversation_id,
-        Result="Accepted",
-        FlexRequestMessageID=flex_req_msg_id,
-    )
-
-    inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
-
-    token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
-    print('STATUS: Received token')
-    print('RESPONSE INNER BYTES')
-    print(inner_bytes.decode("utf-8"))
-    print('============')
-    signed_body = sign_message(inner_bytes)
-    await send_signed_message(signed_body, token,recipient_domain,"AGR")
-
-async def process_signed_message(root):
-    sender_domain = root.attrib["SenderDomain"]
-    sender_role = root.attrib["SenderRole"]
-    body_b64 = root.attrib["Body"]
-
-    # Public key ophalen
-    public_key_bytes = await get_public_key(sender_role, sender_domain)
-
-    # Verify en inner XML extraheren
-    inner_xml_bytes = verify_and_extract_inner_xml(body_b64, public_key_bytes)
-    with open('test.xml','wb') as f:
-        f.write(inner_xml_bytes)
-        f.close()
-    # Parse inner XML
-    inner_root = etree.XML(inner_xml_bytes)
-    msg_type = etree.QName(inner_root.tag).localname
-
-    # FlexRequest verwerken
-    if msg_type == "FlexRequest":
-        await handle_flex_request(inner_root)
-
+    url = f"{GOPACS_PARTICIPANT_API}/{sender_role}/{sender_domain}"
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url)
+        r.raise_for_status()
+        data = r.json()
+        public_key_b64 = data["publicKey"]
+        return base64.b64decode(public_key_b64)
