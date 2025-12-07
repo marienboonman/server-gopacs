@@ -10,6 +10,7 @@ import uuid
 import requests
 from datetime import datetime
 from datetime import timezone
+from datetime import timedelta
 from config import (
     GOPACS_PARTICIPANT_API, GOPACS_MESSAGE_BROKER,
     MY_DOMAIN, MY_ROLE, MY_PRIVATE_KEY_B64,
@@ -58,9 +59,6 @@ FUNC FOR MAIN BACKGROUND TASK
 """
 
 async def handle_flex_request(root):
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    
-
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
@@ -82,7 +80,8 @@ async def handle_flex_request(root):
     my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
-    filename = 'messaging/{}_Request.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
+    requestTimeStamp = etree.XML(incoming_message).attrib["TimeStamp"]
+    filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)
         f.close()
@@ -93,9 +92,10 @@ async def handle_flex_request(root):
     print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
     print('============')
 
-    response_inner_bytes = construct_flex_response(incoming_message, timestamp)
-    
-    filename = 'messaging/{}_Response.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%d%H%M%SZ'))
+
+    response_inner_bytes = construct_flex_response(incoming_message)
+    responseTimeStamp = etree.XML(response_inner_bytes).attrib["RecipientDomain"]
+    filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)
         f.close()
@@ -118,7 +118,13 @@ async def handle_flex_request(root):
     print('OBJECTTYPE: ', type(signed_response_body))
     #print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
+    
+    flex_offer = construct_flex_offer()
+    print('FLEXOFFER:')
+    print(xml.dom.minidom.parseString(flex_offer).toprettyxml())
+    print('============')
 
+    #await send_flexoffer()
 
 """
 FUNCS FOR INCOMING MESSAGE
@@ -134,11 +140,60 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     inner_xml = verify_key.verify(signed_bytes)
     return inner_xml
 
+"""
+OUTGOING MESSAGE HANDLING
+"""
+
+def sign_message(inner_xml: bytes) -> str:
+    """
+    Sign inner XML met jouw private key en retourneer base64-encoded SignedMessage Bod>
+    """
+    priv = base64.b64decode(MY_PRIVATE_KEY_B64)
+    signing_key = SigningKey(priv[:32])  # Ed25519 seed
+    signed = signing_key.sign(inner_xml)
+    return base64.b64encode(signed).decode("ascii")
+
+async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_ROLE):
+    signed_msg = etree.Element(
+        "SignedMessage",
+        SenderDomain=MY_DOMAIN,
+        SenderRole=MY_ROLE,
+        Body=body_b64,
+    )
+
+
+    xml_bytes = etree.tostring(
+        signed_msg, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
+    if senddebug:
+        print("OUTGOING MESSAGE: ")
+        print(xml_bytes.decode("utf-8"))
+    headers = {
+        "Authorization": f"Bearer {bearer_token}",
+        "Content-Type": "application/xml",
+        "Accept": "application/json",
+    }
+    if senddebug:    
+        print('STATUS: message ready to send')
+        print('STATUS: sending to: ', GOPACS_MESSAGE_BROKER)
+        print('HEADERS')
+        print(headers)
+        print('==============')
+        print('CONTENT')
+        print(xml_bytes)
+        print('==============')
+    r = requests.post(GOPACS_MESSAGE_BROKER,xml_bytes, headers = headers)
+    print(r)
+    print(r.text)
+
+
 
 """
-FUNCS FOR OUTGOING MESSAGE
+MESSAGE BUILDING
 """
-def construct_flex_response(incoming_message: str, timestamp: str) -> str:
+def construct_flex_response(incoming_message: str) -> str:
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    expiration = (datetime.now(timezone.utc)+timedelta(hours = 1)).strftime('%Y-%m-%dT%H:%M:%SZ')
         # Parse inner XML en extract waarden om te gebruiken in response
     incoming_message_root = etree.XML(incoming_message)
     msg_type = etree.QName(incoming_message_root.tag).localname
@@ -166,48 +221,45 @@ def construct_flex_response(incoming_message: str, timestamp: str) -> str:
     )
     return response_inner_bytes
 
-def sign_message(inner_xml: bytes) -> str:
-    """
-    Sign inner XML met jouw private key en retourneer base64-encoded SignedMessage Bod>
-    """
-    priv = base64.b64decode(MY_PRIVATE_KEY_B64)
-    signing_key = SigningKey(priv[:32])  # Ed25519 seed
-    signed = signing_key.sign(inner_xml)
-    return base64.b64encode(signed).decode("ascii")
+def construct_flex_offer(incoming_message: str, timestamp: str) -> str:
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        # Parse inner XML en extract waarden om te gebruiken in response
+    incoming_message_root = etree.XML(incoming_message)
+    msg_type = etree.QName(incoming_message_root.tag).localname
+    version = incoming_message_root.attrib["Version"]
+    sender_domain = incoming_message_root.attrib["SenderDomain"]
+    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
+    conversation_id = incoming_message_root.attrib["ConversationID"]
+    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    
+    # Bouw flexoffer op
+    #flex_option = etree.Element(
+    #)
 
-async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_ROLE):
-    signed_msg = etree.Element(
-        "SignedMessage",
-        SenderDomain=MY_DOMAIN,
-        SenderRole=MY_ROLE,
-        Body=body_b64,
+    flex_resp = etree.Element(
+        "FlexOffer",
+        Version=version,
+        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
+        RecipientDomain=sender_domain,   # en de DSO de ontvanger
+        TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
+        MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
+        ConversationID=conversation_id,
+        ISP-Duration=incoming_message_root.attrib["ISP-Duration"],
+        TimeZone = incoming_message_root.attrib[""],
+        Period = incoming_message_root.attrib[""],
+        CongestionPoint = = incoming_message_root.attrib[""],
+        ExpirationDataTime= = incoming_message_root.attrib[""],
+        FlexRequestMessageID=flex_req_msg_id,
+        ContractID = incoming_message_root.attrib["ContractID"],
+        BaselineReference = "",
+        Currency="EUR",
     )
-    #body_tag = etree.SubElement(signed_msg, "Body")
-    #body_tag_text = body_b64
+    response_inner_bytes = etree.tostring(
+        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
+    return response_inner_bytes
 
-    xml_bytes = etree.tostring(
-        signed_msg, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
-    if senddebug:
-        print("OUTGOING MESSAGE: ")
-        print(xml_bytes.decode("utf-8"))
-    headers = {
-        "Authorization": f"Bearer {bearer_token}",
-        "Content-Type": "application/xml",
-        "Accept": "application/json",
-    }
-    if senddebug:    
-        print('STATUS: message ready to send')
-        print('STATUS: sending to: ', GOPACS_MESSAGE_BROKER)
-        print('HEADERS')
-        print(headers)
-        print('==============')
-        print('CONTENT')
-        print(xml_bytes)
-        print('==============')
-    r = requests.post(GOPACS_MESSAGE_BROKER,xml_bytes, headers = headers)
-    print(r)
-    print(r.text)
+
 
 """
 FUNCS FOR AUTHORISATION
