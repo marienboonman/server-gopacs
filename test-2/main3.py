@@ -67,7 +67,7 @@ async def handle_flex_request(root):
     body_b64 = root.attrib["Body"]
 
     print('OBJECTTYPE: ', type(root))
-    print(xml.dom.minidom.parseString(base_b64.b64decode(body_b64)).toprettyxml())
+    print(xml.dom.minidom.parseString(baseb64.b64decode(body_b64)).toprettyxml())
     #print(root.toprettyxml()) #NEEDS FIXING
 
 
