@@ -119,7 +119,7 @@ async def handle_flex_request(root):
     #print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
     
-    flex_offer = construct_flex_offer()
+    flex_offer = construct_flex_offer(incoming_message)
     print('FLEXOFFER:')
     print(xml.dom.minidom.parseString(flex_offer).toprettyxml())
     print('============')
@@ -221,7 +221,7 @@ def construct_flex_response(incoming_message: str) -> str:
     )
     return response_inner_bytes
 
-def construct_flex_offer(incoming_message: str, timestamp: str) -> str:
+def construct_flex_offer(incoming_message: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         # Parse inner XML en extract waarden om te gebruiken in response
     incoming_message_root = etree.XML(incoming_message)
