@@ -48,7 +48,8 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 
         localname = etree.QName(etree.XML(incoming_message).tag).localname
         print('LOCAL NAME: ', localname)
-    
+        ([elem.tag for elem in incoming_message.iter()])
+        print(incoming_message.attrib["SignedMessage"])
         print('INCOMING MESSAGE RECEIVED:')
         print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
         print('============')
