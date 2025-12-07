@@ -60,13 +60,16 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
-    print('OBJECTTYPE: ', type(root))
-    print(xml.dom.minidom.parseString(body_b64.b64decode(body_b64)).toprettyxml())
-    #print(root.toprettyxml()) #NEEDS FIXING
+
     
     sender_domain = root.attrib["SenderDomain"]
     sender_role = root.attrib["SenderRole"]
     body_b64 = root.attrib["Body"]
+
+    print('OBJECTTYPE: ', type(root))
+    print(xml.dom.minidom.parseString(body_b64.b64decode(body_b64)).toprettyxml())
+    #print(root.toprettyxml()) #NEEDS FIXING
+
 
     # Public key ophalen
     public_key_bytes = await get_public_key(sender_role, sender_domain)
