@@ -46,7 +46,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         # Verify en inner XML extraheren
         incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
-        localname = etree.QName(etree.XML(incoming_message).tag).localname
+        localname = etree.QName(incoming_message.tag).localname
 
         if localname == "FlexRequest":
 #            return Response(
@@ -92,10 +92,10 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
-    my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
+    my_domain = incoming_message.attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
-    requestTimeStamp = etree.XML(incoming_message).attrib["TimeStamp"]
+    requestTimeStamp = incoming_message.attrib["TimeStamp"]
     filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)
@@ -174,7 +174,7 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     signed_bytes = base64.b64decode(body_b64)
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
-    return inner_xml
+    return etree.XML(inner_xml)
 
 """
 OUTGOING MESSAGE HANDLING
