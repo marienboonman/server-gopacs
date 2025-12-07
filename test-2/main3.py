@@ -70,8 +70,8 @@ async def handle_flex_request(root):
 
     # Verify en inner XML extraheren
     incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
-    my_domain = incoming_message_root.attrib["RecipientDomain"]
-    
+    my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
+
     #SAVE INCOMING MESSAGE AND PRINT
     filename = 'messaging/{}_Request.xml'.format(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
     with open(filename,'wb') as f:
