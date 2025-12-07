@@ -104,7 +104,7 @@ async def handle_flex_request(root):
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
-    print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
+    #print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
 
 
