@@ -60,6 +60,8 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(root):
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
+    print('OBJECTTYPE: ', type(root))
+
     #print(root.toprettyxml()) #NEEDS FIXING
     
     sender_domain = root.attrib["SenderDomain"]
@@ -80,6 +82,8 @@ async def handle_flex_request(root):
         f.write(incoming_message)
         f.close()
     
+    print('OBJECTTYPE: ', type(incoming_message))
+
     print('INCOMING MESSAGE SAVED:')
     print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
     print('============')
@@ -91,6 +95,8 @@ async def handle_flex_request(root):
         f.write(incoming_message)
         f.close()
     
+    print('OBJECTTYPE: ', type(response_inner_bytes))
+
     print('OUTGOING MESSAGE SAVED:')
     print(xml.dom.minidom.parseString(response_inner_bytes).toprettyxml())
     print('============')
@@ -104,6 +110,7 @@ async def handle_flex_request(root):
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
+    print('OBJECTTYPE: ', type(signed_response_body))
     #print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
 
