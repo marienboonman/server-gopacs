@@ -126,7 +126,7 @@ def construct_flex_response(incoming_message: str) -> str:
     incoming_message_root = etree.XML(incoming_message)
     msg_type = etree.QName(incoming_message_root.tag).localname
     version = incoming_message_root.attrib["Version"]
-    sender_domain = inner_root.attrib["SenderDomain"]
+    sender_domain = inncoming_message_root.attrib["SenderDomain"]
     recipient_domain = incoming_message_root.attrib["RecipientDomain"]
     conversation_id = incoming_message_root.attrib["ConversationID"]
     flex_req_msg_id = incoming_message_root.attrib["MessageID"]
