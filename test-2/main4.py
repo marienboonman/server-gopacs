@@ -46,10 +46,10 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         # Verify en inner XML extraheren
         incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
-        localname = etree.QName(etree.XML(incoming_message).tag).localname
+        localname = etree.QName(incoming_message.tag).localname
         print('LOCAL NAME: ', localname)
-        ([elem.tag for elem in incoming_message.iter()])
-        print(incoming_message.attrib["SignedMessage"])
+        #print([elem.tag for elem in etree.XML(incoming_message).iter()])
+        #print(etree.XML(incoming_message).attrib["SignedMessage"])
         print('INCOMING MESSAGE RECEIVED:')
         print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
         print('============')
@@ -61,7 +61,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 #            )
 
             # Background task process_signed_message
-            background_tasks.add_task(handle_flex_request, root)
+            background_tasks.add_task(handle_flex_request, incoming_message)
 
             # Onmiddellijke confirmatie aan GOPACS:
             
@@ -183,7 +183,7 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     signed_bytes = base64.b64decode(body_b64)
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
-    return inner_xml
+    return etree.XML(inner_xml)
 
 """
 OUTGOING MESSAGE HANDLING
