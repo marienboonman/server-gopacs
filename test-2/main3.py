@@ -77,7 +77,7 @@ async def handle_flex_request(root):
         f.close()
     
     print('INCOMING MESSAGE SAVED:')
-    print(incoming_message)
+    print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
     print('============')
 
     # Parse inner XML en extract waarden om te gebruiken in response
@@ -113,6 +113,7 @@ async def handle_flex_request(root):
         print(response_inner_bytes.decode("utf-8"))
         print('============')
     signed_response_body = sign_message(response_inner_bytes)
+    print('STATUS: Response is signed')
     await send_signed_message(signed_response_body, token,recipient_domain,"AGR")
 
 
