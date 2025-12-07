@@ -4,6 +4,7 @@ from nacl.encoding import Base64Encoder
 import base64
 import httpx
 from lxml import etree
+import xml.dom.minidom
 import os
 import uuid
 import requests
@@ -12,10 +13,11 @@ from datetime import timezone
 from config import (
     GOPACS_PARTICIPANT_API, GOPACS_MESSAGE_BROKER,
     MY_DOMAIN, MY_ROLE, MY_PRIVATE_KEY_B64,
-    OAUTH_TOKEN_URL, CLIENT_ID, CLIENT_SECRET
+    OAUTH_TOKEN_URL, CLIENT_ID, CLIENT_SECRET,
+    authdebug, senddebug
 )
 
-import time
+
 
 app = FastAPI()
 
@@ -38,7 +40,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         background_tasks.add_task(handle_flex_request, root)
 
         # Onmiddellijke confirmatie aan GOPACS:
-        time.sleep(5) #sleep command om te proberen gopacs te foppen en te kijken of hij dan mijn respons net verwcaht
+        
         return Response(
             status_code=200,
             content="SignedMessage received"
@@ -106,9 +108,10 @@ async def handle_flex_request(root):
 
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
-    print('RESPONSE INNER BYTES')
-    print(response_inner_bytes.decode("utf-8"))
-    print('============')
+    if authdebug:
+        print('RESPONSE INNER BYTES')
+        print(response_inner_bytes.decode("utf-8"))
+        print('============')
     signed_response_body = sign_message(response_inner_bytes)
     await send_signed_message(signed_response_body, token,recipient_domain,"AGR")
 
@@ -153,21 +156,23 @@ async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_RO
     xml_bytes = etree.tostring(
         signed_msg, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
-    print("OUTGOING MESSAGE: ")
-    print(xml_bytes.decode("utf-8"))
+    if senddebug:
+        print("OUTGOING MESSAGE: ")
+        print(xml_bytes.decode("utf-8"))
     headers = {
         "Authorization": f"Bearer {bearer_token}",
         "Content-Type": "application/xml",
         "Accept": "application/json",
     }
-    print('STATUS: message ready to send')
-    print('STATUS: sending to: ', GOPACS_MESSAGE_BROKER)
-    print('HEADERS')
-    print(headers)
-    print('==============')
-    print('CONTENT')
-    print(xml_bytes)
-    print('==============')
+    if senddebug:    
+        print('STATUS: message ready to send')
+        print('STATUS: sending to: ', GOPACS_MESSAGE_BROKER)
+        print('HEADERS')
+        print(headers)
+        print('==============')
+        print('CONTENT')
+        print(xml_bytes)
+        print('==============')
     r = requests.post(GOPACS_MESSAGE_BROKER,xml_bytes, headers = headers)
     print(r)
     print(r.text)
