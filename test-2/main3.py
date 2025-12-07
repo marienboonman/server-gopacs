@@ -237,15 +237,14 @@ def construct_flex_offer(incoming_message: str) -> str:
     #flex_option = etree.Element(
     #)
 
-    flex_resp = etree.Element(
-        "FlexOffer",
+    flex_resp = etree.Element("FlexOffer",
         Version=version,
         SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
         RecipientDomain=sender_domain,   # en de DSO de ontvanger
         TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
-        #ISP-Duration=incoming_message_root.attrib["ISP-Duration"],
+        
         TimeZone = incoming_message_root.attrib["TimeZone"],
         Period = incoming_message_root.attrib["Period"],
         CongestionPoint = incoming_message_root.attrib["CongestionPoint"],
@@ -255,6 +254,12 @@ def construct_flex_offer(incoming_message: str) -> str:
         BaselineReference = "",
         Currency="EUR",
     )
+    flex_resp.set("ISP-Duration": incoming_message_root.attrib["ISP-Duration"])
+
+    subelement = etree.SubElement(flex_resp, "OfferOption")
+    subelement.set('OptionReference',uuid.uuid4())
+    subelement.set('Price','0.00')
+
     response_inner_bytes = etree.tostring(
         flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
