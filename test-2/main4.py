@@ -47,7 +47,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
         localname = etree.QName(etree.XML(incoming_message).tag).localname
-        print(localname)
+        print('LOCAL NAME: ', localname)
     
         print('INCOMING MESSAGE RECEIVED:')
         print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
@@ -69,11 +69,6 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
                 content="SignedMessage received"
             )
 
-    except Exception as e:
-        return Response(
-            status_code=400,
-            content=f"Bad Request: {e}"
-        )
         if localname == "FlexOfferResponse":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
@@ -87,8 +82,14 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
             
             return Response(
                 status_code=200,
-                content="SignedMessage received"
+                content="FlexOfferResponse received"
             )
+
+    except Exception as e:
+        return Response(
+            status_code=400,
+            content=f"Bad Request: {e}"
+        )
 
 """
 FUNC FOR MAIN BACKGROUND TASK
@@ -154,8 +155,8 @@ async def handle_flex_offer_response(incoming_message):
     my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
-    requestTimeStamp = etree.XML(incoming_message).attrib["TimeStamp"]
-    filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
+    OrfferResponseTimeStamp = etree.XML(incoming_message).attrib["TimeStamp"]
+    filename = 'messaging/{}_FlexOfferResponse.xml'.format(FlexOfferResponseTimeStamp)
     with open(filename,'wb') as f:
         f.write(incoming_message)
         f.close()
