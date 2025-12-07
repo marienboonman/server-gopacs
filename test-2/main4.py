@@ -178,7 +178,7 @@ def verify_and_extract_inner_xml(body_b64: str, public_key_bytes: bytes) -> byte
     signed_bytes = base64.b64decode(body_b64)
     verify_key = VerifyKey(public_key_bytes)
     inner_xml = verify_key.verify(signed_bytes)
-    return etree.XML(inner_xml)
+    return inner_xml
 
 """
 OUTGOING MESSAGE HANDLING
