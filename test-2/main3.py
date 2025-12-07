@@ -107,10 +107,10 @@ async def handle_flex_request(root):
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
     print('RESPONSE INNER BYTES')
-    print(inner_bytes.decode("utf-8"))
+    print(response_inner_bytes.decode("utf-8"))
     print('============')
-    signed_body = sign_message(response_inner_bytes)
-    await send_signed_message(signed_body, token,recipient_domain,"AGR")
+    signed_response_body = sign_message(response_inner_bytes)
+    await send_signed_message(signed_response_body, token,recipient_domain,"AGR")
 
 
 """
