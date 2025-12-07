@@ -254,7 +254,7 @@ def construct_flex_offer(incoming_message: str) -> str:
         BaselineReference = "",
         Currency="EUR",
     )
-    flex_resp.set("ISP-Duration": incoming_message_root.attrib["ISP-Duration"])
+    flex_resp.set("ISP-Duration", incoming_message_root.attrib["ISP-Duration"])
 
     subelement = etree.SubElement(flex_resp, "OfferOption")
     subelement.set('OptionReference',uuid.uuid4())
