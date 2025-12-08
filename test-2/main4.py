@@ -96,11 +96,11 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 FUNC FOR MAIN BACKGROUND TASK
 """
 
-async def handle_flex_request(incoming_message):
+async def handle_flex_request(FlexRequest):
     
     #haal my_domain uit incoming message 
     #print(type(incoming_message))
-    my_domain = incoming_message.attrib["RecipientDomain"]
+    my_domain = FlexRequest.attrib["RecipientDomain"]
     print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = incoming_message.attrib["TimeStamp"]
@@ -112,11 +112,13 @@ async def handle_flex_request(incoming_message):
     #print('OBJECTTYPE: ', type(incoming_message))
 
     print('INCOMING MESSAGE SAVED:')
-    print(etree.tostring(incoming_message,pretty_print = True))
+    printable = etree.tostring(FlexRequest, pretty_print=True)
+    print(printable)
+    del printable
     print('============')
 
 
-    FlexRequestResponse = construct_flex_response(incoming_message)
+    FlexRequestResponse = construct_flex_response(FlexRequest)
     responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
@@ -125,31 +127,39 @@ async def handle_flex_request(incoming_message):
     
     print('OBJECTTYPE: ', type(response_inner_bytes))
 
-    print('OUTGOING FlexResponse SAVED:')
-    print(etree.tostring(FlexResponse,pretty_print = True))
+    print('OUTGOING FlexRequestResponse SAVED:')
+    printable = etree.tostring(FlexRequestResponse,pretty_print = True)
+    print(printable)
+    del printable
     print('============')
 
 
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
+
+    response_inner_bytes = etree.tostring(
+        FlexRequestResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+
     if authdebug:
         print('RESPONSE INNER BYTES')
         print(response_inner_bytes.decode("utf-8"))
         print('============')
 
-    response_inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
     print('OBJECTTYPE: ', type(signed_response_body))
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
     
-    flex_offer = construct_flex_offer(incoming_message)
+    FlexOffer = construct_flex_offer(FlexRequest)
     print('FLEXOFFER:')
-    print(xml.dom.minidom.parseString(flex_offer).toprettyxml())
+    printable = etree.tostring(FlexOffer,pretty_print = True)
+    print(printable)
+    del printable
     print('============')
-    signed_flex_offer = sign_message(flex_offer)
+
+    FlexOfferBytes = etree.tostring(
+        FlexOffer, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    signed_flex_offer = sign_message(FlexOfferBytes)
     await send_signed_message(signed_flex_offer, token, my_domain,"AGR")
     #await send_flexoffer()
 
