@@ -58,11 +58,6 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         print('============')
 
         if incoming_message_name == "FlexRequest":
-#            return Response(
-#                status_code=status.HTTP_400_BAD_REQUEST,
-#                content="Expected SignedMessage root element",
-#            )
-
             # Background task process_signed_message
             
             background_tasks.add_task(handle_flex_request, incoming_message)
@@ -75,10 +70,6 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
             )
 
         if incoming_message_name == "FlexOfferResponse":
-#            return Response(
-#                status_code=status.HTTP_400_BAD_REQUEST,
-#                content="Expected SignedMessage root element",
-#            )
 
             # Background task process_signed_message
             background_tasks.add_task(handle_flex_offer_response, incoming_message)
@@ -88,6 +79,18 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
             return Response(
                 status_code=200,
                 content="FlexOfferResponse received"
+            )
+
+        if incoming_message_name == "FlexOrder":
+
+            # Background task process_signed_message
+            background_tasks.add_task(handle_flex_order, incoming_message)
+
+            # Onmiddellijke confirmatie aan GOPACS:
+            
+            return Response(
+                status_code=200,
+                content="FlexOrder received"
             )
 
     except Exception as e:
@@ -124,7 +127,7 @@ async def handle_flex_request(FlexRequest):
 
     FlexRequestResponse = construct_flex_request_response(FlexRequest)
     responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
-    filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
+    filename = 'messaging/{}_FlexRequestResponse.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
         f.close()
@@ -155,7 +158,12 @@ async def handle_flex_request(FlexRequest):
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
     
     FlexOffer = construct_flex_offer(FlexRequest)
-    print('FLEXOFFER:')
+
+    filename = 'messaging/{}_FlexOffer.xml'.format(responseTimeStamp)
+    with open(filename,'wb') as f:
+        f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
+        f.close()
+    print('OUTGOING MESSAGE FlexOffer SAVED:')
     printable = etree.tostring(FlexOffer,pretty_print = True)
     print(printable)
     del printable
@@ -188,6 +196,9 @@ async def handle_flex_offer_response(FlexOfferResponse):
     print('============')
 
 
+async def handle_flex_order(FlexOrder):
+    print('Handling FlexOrder')
+    FlexOrderTimeStamp = FlexOrder.attrib["TimeStamp"]    
 
 """
 FUNCS FOR INCOMING MESSAGE
@@ -334,6 +345,30 @@ def construct_flex_offer(FlexRequest: str) -> str:
     #)
     return FlexOffer
 
+def construct_order_response(FlexOrder: str) -> str:
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    version = FlexOrder.attrib["Version"]
+    sender_domain = FlexOrder.attrib["SenderDomain"]
+    recipient_domain = FlexOrder.attrib["RecipientDomain"]
+    conversation_id = FlexOrder.attrib["ConversationID"]
+    flex_req_msg_id = FlexOrder.attrib["MessageID"]
+    
+    # Bouw flexoffer op
+    #flex_option = etree.Element(
+    #)
+
+    FlexOrderResponse = etree.Element("FlexOffer",
+        Version=version,
+        SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
+        RecipientDomain=sender_domain,   # en de DSO de ontvanger
+        TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
+        MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
+        ConversationID=conversation_id,
+        Result = "Accepted",
+        )
+
+    return FlexOrderResponse
 
 
 """
