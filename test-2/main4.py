@@ -142,7 +142,7 @@ async def handle_flex_request(FlexRequest):
 
     # Sla FlexOffer op
     FlexOfferTimeStamp = FlexOffer.attrib["TimeStamp"]
-    filename = 'messaging/{}_FlexRequestResponse.xml'.format(FlexOfferTimeStamp)
+    filename = 'messaging/{}_FlexOffer.xml'.format(FlexOfferTimeStamp)
     flex_offer_inner_bytes = etree.tostring(
         FlexOffer, xml_declaration=True, encoding="UTF-8", standalone="yes")
     SavePrintMessage(flex_offer_inner_bytes, "FlexOffer","OUTGOING",filename)   
@@ -158,72 +158,47 @@ async def handle_flex_offer_response(FlexOfferResponse):
     print('Handling FlexOfferResponse')
     #haal my_domain uit incoming message 
     my_domain = FlexOfferResponse.attrib["RecipientDomain"]
-
-    #SAVE INCOMING MESSAGE AND PRINT
     FlexOfferResponseTimeStamp = FlexOfferResponse.attrib["TimeStamp"]
-    filename = 'messaging/{}_FlexOfferResponse.xml'.format(FlexOfferResponseTimeStamp)
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexOfferResponse,pretty_print = True))
-        f.close()
-    
-    #print('OBJECTTYPE: ', type(incoming_message))
 
-    print('INCOMING FlexOfferResponse MESSAGE SAVED:')
-    printable = etree.tostring(FlexOfferResponse,pretty_print = True)
-    print(printable)
-    del printable
-    print('============')
+    # Sla FlexOfferResponse op
+    filename = 'messaging/{}_FlexOfferResponse.xml'.format(FlexOfferResponseTimeStamp)
+    flex_offer_response_inner_bytes = etree.tostring(
+        FlexOfferResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    SavePrintMessage(flex_offer_response_inner_bytes, "FlexOffer","OUTGOING",filename)   
 
 
 async def handle_flex_order(FlexOrder):
     print('Handling FlexOrder')
-        #haal my_domain uit incoming message 
+    #haal my_domain uit incoming message 
     my_domain = FlexOrder.attrib["RecipientDomain"]
-
     FlexOrderTimeStamp = FlexOrder.attrib["TimeStamp"]
     
+    # Sla FlexOrder op
     filename = 'messaging/{}_FlexOrder.xml'.format(FlexOrderTimeStamp)
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexOrder,pretty_print = True))
-        f.close()
-    
-    #print('OBJECTTYPE: ', type(incoming_message))
+    flex_order_inner_bytes = etree.tostring(
+        FlexOrder, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    SavePrintMessage(flex_order_inner_bytes, "FlexOrder","OUTGOING",filename)  
 
-    print('INCOMING FlexOrder MESSAGE SAVED:')
-    printable = etree.tostring(FlexOrder, pretty_print=True)
-    print(printable)
-    del printable
-    print('============')
-
+    #maak FlexOrderResponse
     FlexOrderResponse = construct_order_response(FlexOrder)
-    responseTimeStamp = FlexOrderResponse.attrib["TimeStamp"]
 
-    filename = 'messaging/{}_FlexOrderResponse.xml'.format(responseTimeStamp)
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexOrderResponse,pretty_print = True))
-        f.close()
-    print('OUTGOING FlexOrderResponse SAVED:')
-    printable = etree.tostring(FlexOrderResponse,pretty_print = True)
-    print(printable)
-    del printable
-    print('============')
+    # Sla FlexOrderResponse op
+    FlexOrderResponseTimeStamp = FlexOrderResponse.attrib["TimeStamp"]
+    filename = 'messaging/{}_FlexOrder.xml'.format(FlexOrderResponseTimeStamp)
+    flex_order_response_inner_bytes = etree.tostring(
+        FlexOrderResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    SavePrintMessage(flex_order_response_inner_bytes, "FlexOrderResponse","OUTGOING",filename)  
 
+    #Sign FlexOrderResponse
+    signed_flex_order_response_body = sign_message(flex_order_response_inner_bytes)
+    print('STATUS: FlexOrderResponse is signed')
+
+    # Token ophalen
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
 
-    response_inner_bytes = etree.tostring(
-        FlexOrderResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
-    print('OBJECTTYPE: ', type(response_inner_bytes))
-
-    if authdebug:
-        print('RESPONSE INNER BYTES')
-        print(response_inner_bytes.decode("utf-8"))
-        print('============')
-
-    signed_response_body = sign_message(response_inner_bytes)
-    print('STATUS: Response is signed')
-    print('OBJECTTYPE: ', type(signed_response_body))
-    await send_signed_message(signed_response_body, token,my_domain,"AGR")
+    #Verzend FlexOrderResponse
+    await send_signed_message(signed_flex_order_response_body, token,my_domain,"AGR")
     
 """
 FUNCS FOR INCOMING MESSAGE
