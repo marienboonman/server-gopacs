@@ -56,7 +56,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         del printable
         print(incoming_message)
         print('============')
-        background_tasks = BackgroundTasks()
+
         if incoming_message_name == "FlexRequest":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,7 +74,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
                 content="SignedMessage received"
             )
 
-        if localname == "FlexOfferResponse":
+        if incoming_message_name == "FlexOfferResponse":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
 #                content="Expected SignedMessage root element",
