@@ -100,11 +100,11 @@ FUNC FOR MAIN BACKGROUND TASK
 """
 
 async def handle_flex_request(FlexRequest):
-    
+    print('Handling FlexOfferResponse')
     #haal my_domain uit incoming message 
     #print(type(incoming_message))
     my_domain = FlexRequest.attrib["RecipientDomain"]
-    print(my_domain)
+    #print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = FlexRequest.attrib["TimeStamp"]
     filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
@@ -167,7 +167,7 @@ async def handle_flex_request(FlexRequest):
     #await send_flexoffer()
 
 async def handle_flex_offer_response(FlexOfferResponse):
-    
+    print('Handling FlexOfferResponse')
     #haal my_domain uit incoming message 
     my_domain = FlexOfferResponse.attrib["RecipientDomain"]
 
@@ -180,7 +180,7 @@ async def handle_flex_offer_response(FlexOfferResponse):
     
     #print('OBJECTTYPE: ', type(incoming_message))
 
-    print('INCOMING FelxOfferResponse MESSAGE SAVED:')
+    print('INCOMING FlexOfferResponse MESSAGE SAVED:')
     printable = etree.tostring(FlexOfferResponse,pretty_print = True)
     print(printable)
     del printable
