@@ -51,6 +51,9 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         #print([elem.tag for elem in etree.XML(incoming_message).iter()])
         #print(etree.XML(incoming_message).attrib["SignedMessage"])
         print('INCOMING MESSAGE RECEIVED:')
+        printable = etree.tostring(incoming_message, pretty_print=True)
+        print(printable)
+        del printable
         print(incoming_message)
         print('============')
 
@@ -77,7 +80,7 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
 #            )
 
             # Background task process_signed_message
-            background_tasks.add_task(handle_flex_offer_response, root)
+            background_tasks.add_task(handle_flex_offer_response, incoming_message)
 
             # Onmiddellijke confirmatie aan GOPACS:
             
@@ -103,15 +106,15 @@ async def handle_flex_request(FlexRequest):
     my_domain = FlexRequest.attrib["RecipientDomain"]
     print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
-    requestTimeStamp = incoming_message.attrib["TimeStamp"]
+    requestTimeStamp = FlexRequest.attrib["TimeStamp"]
     filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
     with open(filename,'wb') as f:
-        f.write(etree.tostring(incoming_message,pretty_print = True))
+        f.write(etree.tostring(FlexRequest,pretty_print = True))
         f.close()
     
     #print('OBJECTTYPE: ', type(incoming_message))
 
-    print('INCOMING MESSAGE SAVED:')
+    print('INCOMING FlexRequest MESSAGE SAVED:')
     printable = etree.tostring(FlexRequest, pretty_print=True)
     print(printable)
     del printable
@@ -163,22 +166,24 @@ async def handle_flex_request(FlexRequest):
     await send_signed_message(signed_flex_offer, token, my_domain,"AGR")
     #await send_flexoffer()
 
-async def handle_flex_offer_response(incoming_message):
+async def handle_flex_offer_response(FlexOfferResponse):
     
     #haal my_domain uit incoming message 
-    my_domain = etree.XML(incoming_message).attrib["RecipientDomain"]
+    my_domain = FlexOfferResponse.attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
-    OrfferResponseTimeStamp = etree.XML(incoming_message).attrib["TimeStamp"]
+    OfferResponseTimeStamp = FlexOfferResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_FlexOfferResponse.xml'.format(FlexOfferResponseTimeStamp)
     with open(filename,'wb') as f:
-        f.write(incoming_message)
+        f.write(etree.tostring(FlexOfferResponse,pretty_print = True))
         f.close()
     
-    print('OBJECTTYPE: ', type(incoming_message))
+    #print('OBJECTTYPE: ', type(incoming_message))
 
-    print('INCOMING MESSAGE SAVED:')
-    print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
+    print('INCOMING FelxOfferResponse MESSAGE SAVED:')
+    printable = etree.tostring(FlexOfferResponse,pretty_print = True)
+    print(printable)
+    del printable
     print('============')
 
 
