@@ -184,7 +184,7 @@ async def handle_flex_order(FlexOrder):
 
     # Sla FlexOrderResponse op
     FlexOrderResponseTimeStamp = FlexOrderResponse.attrib["TimeStamp"]
-    filename = 'messaging/{}_FlexOrder.xml'.format(FlexOrderResponseTimeStamp)
+    filename = 'messaging/{}_FlexOrderResponse.xml'.format(FlexOrderResponseTimeStamp)
     flex_order_response_inner_bytes = etree.tostring(
         FlexOrderResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
     SavePrintMessage(flex_order_response_inner_bytes, "FlexOrderResponse","OUTGOING",filename)  
