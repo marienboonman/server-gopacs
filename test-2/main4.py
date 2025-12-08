@@ -230,7 +230,7 @@ async def handle_flex_order(FlexOrder):
     print('STATUS: Received token')
 
     response_inner_bytes = etree.tostring(
-        FlexORderResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+        FlexOrderResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
     print('OBJECTTYPE: ', type(response_inner_bytes))
 
     if authdebug:
