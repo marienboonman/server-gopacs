@@ -111,7 +111,7 @@ async def handle_flex_request(FlexRequest):
     #print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = FlexRequest.attrib["TimeStamp"]
-    filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
+    filename = 'messaging/{}_FlexRequest.xml'.format(requestTimeStamp)
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexRequest,pretty_print = True))
         f.close()
@@ -312,7 +312,7 @@ async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_RO
 MESSAGE BUILDING
 """
 def construct_flex_request_response(FlexRequest: str) -> str:
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         # Parse inner XML en extract waarden om te gebruiken in response
     #incoming_message_root = etree.XML(incoming_message)
     #msg_type = etree.QName(incoming_message_root.tag).localname
@@ -339,7 +339,7 @@ def construct_flex_request_response(FlexRequest: str) -> str:
     return FlexRequestResponse
 
 def construct_flex_offer(FlexRequest: str) -> str:
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     expiration = (datetime.now(timezone.utc)+timedelta(hours = 1)).strftime('%Y-%m-%dT%H:%M:%SZ')
 
         # Parse inner XML en extract waarden om te gebruiken in response
@@ -392,7 +392,7 @@ def construct_flex_offer(FlexRequest: str) -> str:
     return FlexOffer
 
 def construct_order_response(FlexOrder: str) -> str:
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     
     version = FlexOrder.attrib["Version"]
     sender_domain = FlexOrder.attrib["SenderDomain"]
