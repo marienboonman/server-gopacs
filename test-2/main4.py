@@ -23,8 +23,7 @@ from config import (
 app = FastAPI()
 
 @app.post("/shapeshifter/api/v3/message")
-async def uftp_endpoint(request: Request, background_tasks1: BackgroundTasks,
-    background_tasks2: BackgroundTasks, background_tasks3: BackgroundTasks):
+async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
     raw_body = await request.body()
     print("STATUS: Raw body received")
 
@@ -57,7 +56,7 @@ async def uftp_endpoint(request: Request, background_tasks1: BackgroundTasks,
         del printable
         print(incoming_message)
         print('============')
-
+        background_tasks = BackgroundTasks()
         if incoming_message_name == "FlexRequest":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
@@ -65,7 +64,8 @@ async def uftp_endpoint(request: Request, background_tasks1: BackgroundTasks,
 #            )
 
             # Background task process_signed_message
-            background_tasks1.add_task(handle_flex_request, incoming_message)
+            
+            background_tasks.add_task(handle_flex_request, incoming_message)
 
             # Onmiddellijke confirmatie aan GOPACS:
             
@@ -81,7 +81,7 @@ async def uftp_endpoint(request: Request, background_tasks1: BackgroundTasks,
 #            )
 
             # Background task process_signed_message
-            background_tasks2.add_task(handle_flex_offer_response, incoming_message)
+            background_tasks.add_task(handle_flex_offer_response, incoming_message)
 
             # Onmiddellijke confirmatie aan GOPACS:
             
