@@ -105,84 +105,54 @@ FUNC FOR MAIN BACKGROUND TASK
 
 async def handle_flex_request(FlexRequest):
     print('Handling FlexOfferResponse')
-    #haal my_domain uit incoming message 
-    #print(type(incoming_message))
+
+    # Haal te gebruiken waarden uit FlexRequest
     my_domain = FlexRequest.attrib["RecipientDomain"]
-    #print(my_domain)
-    #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = FlexRequest.attrib["TimeStamp"]
 
+    # Sla FleqRequest op
     filename = 'messaging/{}_FlexRequest.xml'.format(requestTimeStamp)
     request_inner_bytes = etree.tostring(
         FlexRequest, xml_declaration=True, encoding="UTF-8", standalone="yes")
     SavePrintMessage(request_inner_bytes, "FlexRequest","OUTGOING",filename)
-    """
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexRequest,pretty_print = True))
-        f.close()
-    """
-    #print('OBJECTTYPE: ', type(incoming_message))
-    
-    """
-    print('INCOMING FlexRequest MESSAGE SAVED:')
-    printable = etree.tostring(FlexRequest, pretty_print=True)
-    print(printable)
-    del printable
-    print('============')
-    """
 
+    # Maak FlexRequestResponse
     FlexRequestResponse = construct_flex_request_response(FlexRequest)
+    
+    # Sla FlexRequestResponse op
     responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_FlexRequestResponse.xml'.format(responseTimeStamp)
-    
-    """
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
-        f.close()
-    
-    
-    print('OUTGOING FlexRequestResponse SAVED:')
-    printable = etree.tostring(FlexRequestResponse,pretty_print = True)
-    print(printable)
-    del printable
-    print('============')
-    """
+    response_inner_bytes = etree.tostring(
+        FlexRequestResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    SavePrintMessage(response_inner_bytes, "FlexRequestResponse","OUTGOING",filename)   
 
+    # Sign FlexRequestResponse
+    signed_response_body = sign_message(response_inner_bytes)
+    print('STATUS: Response is signed')
+
+    # Haal token op voor verzending
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
 
-    response_inner_bytes = etree.tostring(
-        FlexRequestResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
-    print('OBJECTTYPE: ', type(response_inner_bytes))
-    SavePrintMessage(response_inner_bytes, "FlexRequestResponse","OUTGOING")
-
-    if authdebug:
-        print('RESPONSE INNER BYTES')
-        print(response_inner_bytes.decode("utf-8"))
-        print('============')
-
-    signed_response_body = sign_message(response_inner_bytes)
-    print('STATUS: Response is signed')
-    print('OBJECTTYPE: ', type(signed_response_body))
+    # Verstuur FlexRequestResponse
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
     
+    # Maak FlexOffer
     FlexOffer = construct_flex_offer(FlexRequest)
 
-    filename = 'messaging/{}_FlexOffer.xml'.format(responseTimeStamp)
-    with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexOffer,pretty_print = True))
-        f.close()
-    print('OUTGOING MESSAGE FlexOffer SAVED:')
-    printable = etree.tostring(FlexOffer,pretty_print = True)
-    print(printable)
-    del printable
-    print('============')
-
-    FlexOfferBytes = etree.tostring(
+    # Sla FlexOffer op
+    FlexOfferTimeStamp = FlexOffer.attrib["TimeStamp"]
+    filename = 'messaging/{}_FlexRequestResponse.xml'.format(FlexOffferTimeStamp)
+    flex_offer_inner_bytes = etree.tostring(
         FlexOffer, xml_declaration=True, encoding="UTF-8", standalone="yes")
-    signed_flex_offer = sign_message(FlexOfferBytes)
+    SavePrintMessage(flex_offer_inner_bytes, "FlexOffer","OUTGOING",filename)   
+
+    #sign flex offer
+    signed_flex_offer = sign_message(flex_offer_inner_bytes)
+
+    #send flex offer
     await send_signed_message(signed_flex_offer, token, my_domain,"AGR")
-    #await send_flexoffer()
+
 
 async def handle_flex_offer_response(FlexOfferResponse):
     print('Handling FlexOfferResponse')
