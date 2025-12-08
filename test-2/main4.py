@@ -199,7 +199,7 @@ async def handle_flex_offer_response(FlexOfferResponse):
 async def handle_flex_order(FlexOrder):
     print('Handling FlexOrder')
         #haal my_domain uit incoming message 
-    my_domain = FlexOfferResponse.attrib["RecipientDomain"]
+    my_domain = FlexOrder.attrib["RecipientDomain"]
 
     FlexOrderTimeStamp = FlexOrder.attrib["TimeStamp"]
     
