@@ -297,7 +297,7 @@ def construct_flex_offer(FlexRequest: str) -> str:
     #flex_option = etree.Element(
     #)
 
-    flex_resp = etree.Element("FlexOffer",
+    FlexOffer = etree.Element("FlexOffer",
         Version=version,
         SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
         RecipientDomain=sender_domain,   # en de DSO de ontvanger
@@ -314,9 +314,9 @@ def construct_flex_offer(FlexRequest: str) -> str:
         BaselineReference = "",
         Currency="EUR",
     )
-    flex_resp.set("ISP-Duration", FlexRequest.attrib["ISP-Duration"])
+    FlexOffer.set("ISP-Duration", FlexRequest.attrib["ISP-Duration"])
 
-    OfferOption = etree.SubElement(flex_resp, "OfferOption")
+    OfferOption = etree.SubElement(FlexOffer, "OfferOption")
     OfferOption.set('OptionReference',str(uuid.uuid4()))
     OfferOption.set('Price','0.00')
 
