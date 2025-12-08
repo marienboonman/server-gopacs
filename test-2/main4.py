@@ -128,8 +128,7 @@ async def handle_flex_request(FlexRequest):
         f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
         f.close()
     
-    print('OBJECTTYPE: ', type(response_inner_bytes))
-
+    
     print('OUTGOING FlexRequestResponse SAVED:')
     printable = etree.tostring(FlexRequestResponse,pretty_print = True)
     print(printable)
@@ -142,6 +141,7 @@ async def handle_flex_request(FlexRequest):
 
     response_inner_bytes = etree.tostring(
         FlexRequestResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    print('OBJECTTYPE: ', type(response_inner_bytes))
 
     if authdebug:
         print('RESPONSE INNER BYTES')
