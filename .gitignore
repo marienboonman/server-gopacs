@@ -189,4 +189,5 @@ cython_debug/
 test-local/config.py
 test/config.py
 test-2/config.py
-test-2/messaging/*
+prod/config.py
+test-2/messaging
