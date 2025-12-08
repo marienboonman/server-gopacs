@@ -99,34 +99,34 @@ FUNC FOR MAIN BACKGROUND TASK
 async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
-    print(type(incoming_message))
+    #print(type(incoming_message))
     my_domain = incoming_message.attrib["RecipientDomain"]
     print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = incoming_message.attrib["TimeStamp"]
     filename = 'messaging/{}_Request.xml'.format(requestTimeStamp)
     with open(filename,'wb') as f:
-        f.write(incoming_message)
+        f.write(etree.tostring(incoming_message,pretty_print = True))
         f.close()
     
-    print('OBJECTTYPE: ', type(incoming_message))
+    #print('OBJECTTYPE: ', type(incoming_message))
 
     print('INCOMING MESSAGE SAVED:')
-    print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
+    print(etree.tostring(incoming_message,pretty_print = True))
     print('============')
 
 
-    response_inner_bytes = construct_flex_response(incoming_message)
-    responseTimeStamp = etree.XML(response_inner_bytes).attrib["TimeStamp"]
+    FlexRequestResponse = construct_flex_response(incoming_message)
+    responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
-        f.write(incoming_message)
+        f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
         f.close()
     
     print('OBJECTTYPE: ', type(response_inner_bytes))
 
-    print('OUTGOING MESSAGE SAVED:')
-    print(xml.dom.minidom.parseString(response_inner_bytes).toprettyxml())
+    print('OUTGOING FlexResponse SAVED:')
+    print(etree.tostring(FlexResponse,pretty_print = True))
     print('============')
 
 
@@ -136,10 +136,13 @@ async def handle_flex_request(incoming_message):
         print('RESPONSE INNER BYTES')
         print(response_inner_bytes.decode("utf-8"))
         print('============')
+
+    response_inner_bytes = etree.tostring(
+        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    )
     signed_response_body = sign_message(response_inner_bytes)
     print('STATUS: Response is signed')
     print('OBJECTTYPE: ', type(signed_response_body))
-    #print(xml.dom.minidom.parseString(signed_response_body).toprettyxml())
     await send_signed_message(signed_response_body, token,my_domain,"AGR")
     
     flex_offer = construct_flex_offer(incoming_message)
@@ -259,10 +262,8 @@ def construct_flex_response(incoming_message: str) -> str:
         FlexRequestMessageID=flex_req_msg_id,
     )
 
-    response_inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
-    return response_inner_bytes
+
+    return FlexRequestResponse
 
 def construct_flex_offer(incoming_message: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -312,10 +313,10 @@ def construct_flex_offer(incoming_message: str) -> str:
             isp.set('Power',elem.attrib["MaxPower"])
 
 
-    response_inner_bytes = etree.tostring(
-        flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
-    )
-    return response_inner_bytes
+    #response_inner_bytes = etree.tostring(
+    #    flex_resp, xml_declaration=True, encoding="UTF-8", standalone="yes"
+    #)
+    return FlexOffer
 
 
 
