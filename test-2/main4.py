@@ -200,7 +200,7 @@ async def handle_flex_order(FlexOrder):
     print('Handling FlexOrder')
     FlexOrderTimeStamp = FlexOrder.attrib["TimeStamp"]
     
-    filename = 'messaging/{}_FlexOrder.xml'.format(requestTimeStamp)
+    filename = 'messaging/{}_FlexOrder.xml'.format(FlexOrderTimeStamp)
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexOrder,pretty_print = True))
         f.close()
@@ -214,7 +214,7 @@ async def handle_flex_order(FlexOrder):
     print('============')
 
     FlexOrderResponse = construct_order_response(FlexOrder)
-    responseTimeStamp = FlexORderResponse.attrib["TimeStamp"]
+    responseTimeStamp = FlexOrderResponse.attrib["TimeStamp"]
 
     filename = 'messaging/{}_FlexOrderResponse.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
