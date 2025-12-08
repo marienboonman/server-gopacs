@@ -111,23 +111,31 @@ async def handle_flex_request(FlexRequest):
     #print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
     requestTimeStamp = FlexRequest.attrib["TimeStamp"]
+
     filename = 'messaging/{}_FlexRequest.xml'.format(requestTimeStamp)
+    request_inner_bytes = etree.tostring(
+        FlexRequest, xml_declaration=True, encoding="UTF-8", standalone="yes")
+    SavePrintMessage(request_inner_bytes, "FlexRequest","OUTGOING",filename)
+    """
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexRequest,pretty_print = True))
         f.close()
-    
+    """
     #print('OBJECTTYPE: ', type(incoming_message))
-
+    
+    """
     print('INCOMING FlexRequest MESSAGE SAVED:')
     printable = etree.tostring(FlexRequest, pretty_print=True)
     print(printable)
     del printable
     print('============')
-
+    """
 
     FlexRequestResponse = construct_flex_request_response(FlexRequest)
     responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_FlexRequestResponse.xml'.format(responseTimeStamp)
+    
+    """
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
         f.close()
@@ -138,7 +146,7 @@ async def handle_flex_request(FlexRequest):
     print(printable)
     del printable
     print('============')
-
+    """
 
     token = await get_oauth_token(CLIENT_ID, CLIENT_SECRET)
     print('STATUS: Received token')
@@ -146,6 +154,7 @@ async def handle_flex_request(FlexRequest):
     response_inner_bytes = etree.tostring(
         FlexRequestResponse, xml_declaration=True, encoding="UTF-8", standalone="yes")
     print('OBJECTTYPE: ', type(response_inner_bytes))
+    SavePrintMessage(response_inner_bytes, "FlexRequestResponse","OUTGOING")
 
     if authdebug:
         print('RESPONSE INNER BYTES')
@@ -449,3 +458,12 @@ async def get_public_key(sender_role: str, sender_domain: str) -> bytes:
         data = r.json()
         public_key_b64 = data["publicKey"]
         return base64.b64decode(public_key_b64)
+
+def SavePrintMessage(xml_bytes, name, direction, filename):
+    root = etree.fromstring(xml_bytes)
+    with open(filename, "wb") as f:
+        f.write(etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="utf-8"))
+    pretty = etree.tostring(root, pretty_print=True, encoding="unicode")
+    print('{} MESSAGE {} saved'.format(direction, name))
+    print(pretty)
+    print('==========')
