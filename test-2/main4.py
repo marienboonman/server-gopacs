@@ -398,19 +398,20 @@ def construct_order_response(FlexOrder: str) -> str:
     sender_domain = FlexOrder.attrib["SenderDomain"]
     recipient_domain = FlexOrder.attrib["RecipientDomain"]
     conversation_id = FlexOrder.attrib["ConversationID"]
-    flex_req_msg_id = FlexOrder.attrib["MessageID"]
+    flex_order_msg_id = FlexOrder.attrib["MessageID"]
     
     # Bouw flexoffer op
     #flex_option = etree.Element(
     #)
 
-    FlexOrderResponse = etree.Element("FlexOffer",
+    FlexOrderResponse = etree.Element("FlexOrderResponse",
         Version=version,
         SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
         RecipientDomain=sender_domain,   # en de DSO de ontvanger
         TimeStamp=timestamp,                   # TODO: nu-tijd in UTC
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
+        FlexOrderMessageID=flex_order_msg_id,
         Result = "Accepted",
         )
 
