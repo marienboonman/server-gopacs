@@ -161,7 +161,7 @@ async def handle_flex_request(FlexRequest):
 
     filename = 'messaging/{}_FlexOffer.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
-        f.write(etree.tostring(FlexRequestResponse,pretty_print = True))
+        f.write(etree.tostring(FlexOffer,pretty_print = True))
         f.close()
     print('OUTGOING MESSAGE FlexOffer SAVED:')
     printable = etree.tostring(FlexOffer,pretty_print = True)
