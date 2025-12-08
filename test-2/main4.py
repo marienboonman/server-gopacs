@@ -265,7 +265,7 @@ def construct_flex_request_response(FlexRequest: str) -> str:
     flex_req_msg_id = FlexRequest.attrib["MessageID"]
     
     # Bouw response op
-    flex_resp = etree.Element(
+    FlexRequestResponse = etree.Element(
         "FlexRequestResponse",
         Version=version,
         SenderDomain=recipient_domain,   # nu ben JIJ de afzender (AGR)
