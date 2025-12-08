@@ -320,7 +320,7 @@ def construct_flex_offer(FlexRequest: str) -> str:
     OfferOption.set('OptionReference',str(uuid.uuid4()))
     OfferOption.set('Price','0.00')
 
-    for elem in incoming_message_root:
+    for elem in FlexRequest:
         if elem.tag == 'ISP':
             isp = etree.SubElement(OfferOption, "ISP")
             isp.set('Start',elem.attrib["Start"])
