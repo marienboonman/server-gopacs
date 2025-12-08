@@ -46,15 +46,15 @@ async def uftp_endpoint(request: Request, background_tasks: BackgroundTasks):
         # Verify en inner XML extraheren
         incoming_message = verify_and_extract_inner_xml(body_b64, public_key_bytes)
 
-        localname = etree.QName(incoming_message.tag).localname
-        print('LOCAL NAME: ', localname)
+        incoming_message_name = etree.QName(incoming_message.tag).localname
+        print('LOCAL NAME: ', incoming_message_name)
         #print([elem.tag for elem in etree.XML(incoming_message).iter()])
         #print(etree.XML(incoming_message).attrib["SignedMessage"])
         print('INCOMING MESSAGE RECEIVED:')
-        print(xml.dom.minidom.parseString(incoming_message).toprettyxml())
+        print(incoming_message)
         print('============')
 
-        if localname == "FlexRequest":
+        if incoming_message_name == "FlexRequest":
 #            return Response(
 #                status_code=status.HTTP_400_BAD_REQUEST,
 #                content="Expected SignedMessage root element",
@@ -100,7 +100,6 @@ async def handle_flex_request(incoming_message):
     
     #haal my_domain uit incoming message 
     print(type(incoming_message))
-    print([elem.tag for elem in incoming_message.iter()])
     my_domain = incoming_message.attrib["RecipientDomain"]
     print(my_domain)
     #SAVE INCOMING MESSAGE AND PRINT
