@@ -121,7 +121,7 @@ async def handle_flex_request(FlexRequest):
     print('============')
 
 
-    FlexRequestResponse = construct_flex_response(FlexRequest)
+    FlexRequestResponse = construct_flex_request_response(FlexRequest)
     responseTimeStamp = FlexRequestResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_Response.xml'.format(responseTimeStamp)
     with open(filename,'wb') as f:
@@ -253,16 +253,16 @@ async def send_signed_message(body_b64: bytes, bearer_token: str,MY_DOMAIN,MY_RO
 """
 MESSAGE BUILDING
 """
-def construct_flex_response(incoming_message: str) -> str:
+def construct_flex_request_response(FlexRequest: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         # Parse inner XML en extract waarden om te gebruiken in response
-    incoming_message_root = etree.XML(incoming_message)
-    msg_type = etree.QName(incoming_message_root.tag).localname
-    version = incoming_message_root.attrib["Version"]
-    sender_domain = incoming_message_root.attrib["SenderDomain"]
-    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
-    conversation_id = incoming_message_root.attrib["ConversationID"]
-    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    #incoming_message_root = etree.XML(incoming_message)
+    #msg_type = etree.QName(incoming_message_root.tag).localname
+    version =FlexRequest.attrib["Version"]
+    sender_domain = FlexRequest.attrib["SenderDomain"]
+    recipient_domain = FlexRequest.attrib["RecipientDomain"]
+    conversation_id = FlexRequest.attrib["ConversationID"]
+    flex_req_msg_id = FlexRequest.attrib["MessageID"]
     
     # Bouw response op
     flex_resp = etree.Element(
@@ -280,18 +280,18 @@ def construct_flex_response(incoming_message: str) -> str:
 
     return FlexRequestResponse
 
-def construct_flex_offer(incoming_message: str) -> str:
+def construct_flex_offer(FlexRequest: str) -> str:
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     expiration = (datetime.now(timezone.utc)+timedelta(hours = 1)).strftime('%Y-%m-%dT%H:%M:%SZ')
 
         # Parse inner XML en extract waarden om te gebruiken in response
-    incoming_message_root = etree.XML(incoming_message)
-    msg_type = etree.QName(incoming_message_root.tag).localname
-    version = incoming_message_root.attrib["Version"]
-    sender_domain = incoming_message_root.attrib["SenderDomain"]
-    recipient_domain = incoming_message_root.attrib["RecipientDomain"]
-    conversation_id = incoming_message_root.attrib["ConversationID"]
-    flex_req_msg_id = incoming_message_root.attrib["MessageID"]
+    #incoming_message_root = etree.XML(incoming_message)
+    #msg_type = etree.QName(incoming_message_root.tag).localname
+    version = FlexRequest.attrib["Version"]
+    sender_domain = FlexRequest.attrib["SenderDomain"]
+    recipient_domain = FlexRequest.attrib["RecipientDomain"]
+    conversation_id = FlexRequest.attrib["ConversationID"]
+    flex_req_msg_id = FlexRequest.attrib["MessageID"]
     
     # Bouw flexoffer op
     #flex_option = etree.Element(
@@ -305,16 +305,16 @@ def construct_flex_offer(incoming_message: str) -> str:
         MessageID= str(uuid.uuid4()),    # TODO: echte UUID genereren
         ConversationID=conversation_id,
         
-        TimeZone = incoming_message_root.attrib["TimeZone"],
-        Period = incoming_message_root.attrib["Period"],
-        CongestionPoint = incoming_message_root.attrib["CongestionPoint"],
+        TimeZone = FlexRequest.attrib["TimeZone"],
+        Period = FlexRequest.attrib["Period"],
+        CongestionPoint = FlexRequest.attrib["CongestionPoint"],
         ExpirationDateTime= expiration,
         FlexRequestMessageID=flex_req_msg_id,
-        ContractID = incoming_message_root.attrib["ContractID"],
+        ContractID = FlexRequest.attrib["ContractID"],
         BaselineReference = "",
         Currency="EUR",
     )
-    flex_resp.set("ISP-Duration", incoming_message_root.attrib["ISP-Duration"])
+    flex_resp.set("ISP-Duration", FlexRequest.attrib["ISP-Duration"])
 
     OfferOption = etree.SubElement(flex_resp, "OfferOption")
     OfferOption.set('OptionReference',str(uuid.uuid4()))
