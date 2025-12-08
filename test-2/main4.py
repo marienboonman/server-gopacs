@@ -173,7 +173,7 @@ async def handle_flex_offer_response(FlexOfferResponse):
     my_domain = FlexOfferResponse.attrib["RecipientDomain"]
 
     #SAVE INCOMING MESSAGE AND PRINT
-    OfferResponseTimeStamp = FlexOfferResponse.attrib["TimeStamp"]
+    FlexOfferResponseTimeStamp = FlexOfferResponse.attrib["TimeStamp"]
     filename = 'messaging/{}_FlexOfferResponse.xml'.format(FlexOfferResponseTimeStamp)
     with open(filename,'wb') as f:
         f.write(etree.tostring(FlexOfferResponse,pretty_print = True))
