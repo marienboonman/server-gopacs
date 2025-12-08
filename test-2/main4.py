@@ -142,7 +142,7 @@ async def handle_flex_request(FlexRequest):
 
     # Sla FlexOffer op
     FlexOfferTimeStamp = FlexOffer.attrib["TimeStamp"]
-    filename = 'messaging/{}_FlexRequestResponse.xml'.format(FlexOffferTimeStamp)
+    filename = 'messaging/{}_FlexRequestResponse.xml'.format(FlexOfferTimeStamp)
     flex_offer_inner_bytes = etree.tostring(
         FlexOffer, xml_declaration=True, encoding="UTF-8", standalone="yes")
     SavePrintMessage(flex_offer_inner_bytes, "FlexOffer","OUTGOING",filename)   
